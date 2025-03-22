@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator</title>
+    <!-- Replace QR code library with working version -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            margin: auto;
+            animation: fadeIn 1s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h2 {
+            color: #333;
+        }
+        .tool-box {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tool {
+            background: linear-gradient(145deg, #0066cc, #0099ff);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .tool:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+            background: linear-gradient(145deg, #0052a3, #0073e6);
+        }
+        .tool.selected {
+            animation: toolSelect 0.6s ease-out;
+            background: linear-gradient(145deg, #004080, #0066cc);
+        }
+        @keyframes toolSelect {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.95); }
+            75% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .input-box {
+            max-height: 0;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            background: rgba(255,255,255,0.95);
+            border-radius: 8px;
+            margin: 10px 0;
+            padding: 0 20px;
+        }
+        .input-box.active {
+            display: flex;
+            gap: 15px;
+            max-height: 150px;
+            opacity: 1;
+            transform: translateY(0);
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        #qr-data {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        #qr-data:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 8px rgba(0,123,255,0.3);
+        }
+        button {
+            padding: 12px 25px;
+            background: linear-gradient(145deg, #28a745, #218838);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40,167,69,0.3);
+        }
+        .input-box {
+            display: none;
+        }
+        #qr-container {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            display: inline-block;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .download-btn, .share-btn {
+            display: none;
+            margin-top: 10px;
+            padding: 12px 25px;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            width: 48%;
+            transform: scale(1);
+            position: relative;
+            overflow: hidden;
+        }
+        .download-btn { 
+            background: linear-gradient(145deg, #28a745, #218838);
+            float: left;
+            margin-right: 2%;
+        }
+        .download-btn:hover { 
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 4px 12px rgba(40,167,69,0.3);
+        }
+        .share-btn { 
+            background: linear-gradient(145deg, #007bff, #0056b3);
+            float: right;
+            margin-left: 2%;
+        }
+        .share-btn:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>QR Code Generator</h2>
+        <div class="tool-box">
+            <div class="tool" onclick="openTool('number')">Number</div>
+            <div class="tool" onclick="openTool('social')">Social Media</div>
+            <div class="tool" onclick="openTool('link')">Website Link</div>
+            <div class="tool" onclick="openTool('image')">Image URL</div>
+            <div class="tool" onclick="openTool('gmail')">Gmail</div>
+            <div class="tool" onclick="openTool('text')">Text</div>
+            <div class="tool" onclick="openTool('wifi')">WiFi</div>
+            <div class="tool" onclick="openTool('phone')">Phone Number</div>
+            <div class="tool" onclick="openTool('sms')">SMS</div>
+            <div class="tool" onclick="openTool('vcard')">VCard (Contact)</div>
+            <div class="tool" onclick="openTool('email')">Email</div>
+            <div class="tool" onclick="openTool('bitcoin')">Bitcoin</div>
+            <div class="tool" onclick="openTool('youtube')">YouTube</div>
+            <div class="tool" onclick="openTool('geo')">Location</div>
+            <div class="tool" onclick="openTool('event')">Calendar Event</div>
+            <div class="tool" onclick="openTool('pdf')">PDF URL</div>
+        </div>
+        
+        <div id="input-container" class="input-box">
+            <input type="text" id="qr-data" placeholder="Enter your data...">
+            <button onclick="generateQR()">Generate QR</button>
+        </div>
+        
+        <div id="qr-container"></div>
+        <div class="button-container">
+            <a id="download-btn" class="download-btn" style="display:none;" download="qrcode.png">
+                ⬇️ Download QR
+            </a>
+            <button id="share-btn" class="share-btn" style="display:none;" onclick="shareQR()">
+                ↗️ Share QR
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        let selectedTool = "";
+        
+        let qrInstance = null;
+        
+        function openTool(toolType) {
+            const tools = document.querySelectorAll('.tool');
+            tools.forEach(tool => {
+                tool.classList.remove('selected');
+                tool.style.animation = '';
+            });
+
+            event.target.classList.add('selected');
+            event.target.style.animation = 'toolSelect 0.6s ease-out';
+            
+            selectedTool = toolType;
+            const inputContainer = document.getElementById("input-container");
+            inputContainer.classList.add('active');
+            
+            // Add floating animation to input container
+            inputContainer.style.animation = 'floatIn 0.5s ease-out';
+
+            // Update placeholder with typewriter effect
+            const placeholderText = {
+                'phone': '📱 Enter phone number...',
+                'email': '📧 Enter email address...',
+                'wifi': '📶 Format: SSID:Password...',
+                'geo': '📍 Enter coordinates...',
+                'youtube': '▶️ Enter YouTube URL...',
+                'bitcoin': '₿ Enter Bitcoin address...'
+            }[toolType] || '💡 Enter your data...';
+            
+            animatePlaceholder(document.getElementById("qr-data"), placeholderText);
+            
+            // Reset display with fade out
+            document.getElementById("qr-container").style.animation = 'fadeOut 0.3s';
+            setTimeout(() => {
+                document.getElementById("qr-container").innerHTML = "";
+                document.getElementById("qr-container").style.animation = '';
+            }, 300);
+        }
+
+        function animatePlaceholder(element, text) {
+            element.placeholder = '';
+            let i = 0;
+            const speed = 30;
+            
+            function typeWriter() {
+                if (i < text.length) {
+                    element.placeholder += text.charAt(i);
+                    i++;
+                    setTimeout(typeWriter, speed);
+                }
+            }
+            typeWriter();
+        }
+
+        function generateQR() {
+            let qrContainer = document.getElementById("qr-container");
+            let qrData = document.getElementById("qr-data").value.trim();
+            
+            // Input validation based on tool type
+            if (!validateInput(qrData)) return;
+            
+            // Clear previous QR code
+            if (qrInstance) {
+                qrInstance.clear();
+                qrContainer.innerHTML = "";
+            }
+
+            qrInstance = new QRCode(qrContainer, {
+                text: qrData,
+                width: 200,
+                height: 200,
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            // Use library's built-in callback instead of setTimeout
+            qrInstance._el.title = "";
+            let img = qrContainer.querySelector("img");
+            img.onload = () => {
+                document.getElementById("download-btn").href = img.src;
+                document.getElementById("download-btn").style.display = "inline-block";
+                document.getElementById("share-btn").style.display = "inline-block";
+            };
+        }
+
+        function validateInput(data) {
+            if (!data) {
+                alert("Please enter valid data.");
+                return false;
+            }
+            
+            // Add tool-specific validation
+            switch(selectedTool) {
+                case 'phone':
+                    if (!/^[+]?[\d\s()-]{10,}$/.test(data)) {
+                        alert("Please enter a valid phone number");
+                        return false;
+                    }
+                    break;
+                case 'email':
+                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data)) {
+                        alert("Please enter a valid email address");
+                        return false;
+                    }
+                    break;
+                case 'bitcoin':
+                    if (!/^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,59}$/.test(data)) {
+                        alert("Please enter a valid Bitcoin address");
+                        return false;
+                    }
+                    break;
+                case 'youtube':
+                    if (!/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/.test(data)) {
+                        alert("Please enter a valid YouTube URL");
+                        return false;
+                    }
+                    break;
+                case 'geo':
+                    if (!/^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|(\d{1,2}))(\.\d+)?)$/.test(data)) {
+                        alert("Please enter valid coordinates (e.g., 40.7128,-74.0060)");
+                        return false;
+                    }
+                    break;
+                case 'event':
+                    if (!/^BEGIN:VEVENT[\s\S]*END:VEVENT$/.test(data)) {
+                        alert("Please use proper calendar event format");
+                        return false;
+                    }
+                    break;
+                case 'wifi':
+                    if (!/(WPA|WEP|nopass):[\w\S]{8,}/.test(data)) {
+                        alert("Format: SSID:Password\nSecurity: WPA/WEP/nopass");
+                        return false;
+                    }
+                    break;
+            }
+            return true;
+        }
+
+        function shareQR() {
+            let qrContainer = document.getElementById("qr-container");
+            let img = qrContainer.querySelector("img");
+            if (img) {
+                fetch(img.src)
+                    .then(res => res.blob())
+                    .then(blob => {
+                        const file = new File([blob], "qrcode.png", { type: "image/png" });
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            navigator.share({
+                                title: "QR Code",
+                                text: "Scan this QR Code:",
+                                files: [file]
+                            }).catch(error => console.log("Error sharing", error));
+                        } else {
+                            alert("Sharing is not supported on this device.");
+                        }
+                    })
+                    .catch(error => console.log("Error fetching QR code", error));
+            }
+        }
+    </script>
+</body>
+</html>
